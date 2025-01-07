@@ -44,9 +44,9 @@
       flex-direction: column;
     }
     .fire {
-      font-size: 2em;
+      font-size: 4em; /* Larger initial size */
       line-height: 1;
-      transition: transform 0.5s ease;
+      transition: transform 0.3s ease;
       transform: scale(1);
       text-align: center;
     }
@@ -54,6 +54,27 @@
       display: block;
       color: orange;
       text-shadow: 0 0 10px red;
+    }
+    /* Hype Animation Keyframes */
+    @keyframes hype {
+      0% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(1.3) rotate(5deg); }
+      50% { transform: scale(1.5) rotate(-5deg); }
+      75% { transform: scale(1.3) rotate(5deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    /* Big Celebration Animation Keyframes */
+    @keyframes bigCelebration {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(4); opacity: 0.5; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    /* Apply Hype and Celebration Animations */
+    .fire.hype-animation {
+      animation: hype 0.8s ease-in-out;
+    }
+    .fire.big-celebration {
+      animation: bigCelebration 1s ease-in-out;
     }
     .right {
       background: #333;
@@ -213,8 +234,18 @@
         correctCount++;
         setTimeout(() => {
           growFire();
+
+          // Trigger hype animation between 7th and 9th correct answers
+          if (correctCount >= 7 && correctCount < 10) {
+            fireElement.classList.add("hype-animation");
+            setTimeout(() => {
+              fireElement.classList.remove("hype-animation");
+            }, 800); // match the hype animation duration
+          }
+
           if (correctCount === 10) {
             explodeFire();
+            fireElement.classList.add("big-celebration");
             setTimeout(() => {
               awardPrize();
             }, 800);
@@ -230,9 +261,8 @@
     }
 
     function growFire() {
-      let currentScale = fireElement.style.transform.replace(/[^\d\.]/g, "") || 1;
-      currentScale = parseFloat(currentScale);
-      let newScale = currentScale + 0.1;
+      let currentScale = parseFloat(fireElement.style.transform.replace(/[^\d\.]/g, "")) || 1;
+      let newScale = currentScale + 0.2;
       fireElement.style.transform = `scale(${newScale})`;
     }
 
@@ -259,7 +289,7 @@
     function resetGame() {
       currentQuestion = 0;
       correctCount = 0;
-      fireElement.classList.remove("explosion");
+      fireElement.classList.remove("explosion", "big-celebration");
       fireElement.style.transform = "scale(1)";
       prizeMessage.style.display = "none";
       congratsBox.style.display = "none";
