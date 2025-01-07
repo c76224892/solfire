@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fire Trivia Game</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      font-family: monospace;
+      background: #222;
+      color: #fff;
+    }
+    .instructions {
+      text-align: center;
+      font-size: 1.2em;
+      padding: 10px;
+      background: #000;
+      color: #ff00ff;
+      border-bottom: 2px solid #ff00ff;
+      animation: flash 1s infinite;
+    }
+    @keyframes flash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .container {
+      display: flex;
+      flex: 1;
+      width: 100%;
+    }
+    .left, .right {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .left {
+      background: #000;
+      flex-direction: column;
+    }
+    .fire {
+      font-size: 2em;
+      line-height: 1;
+      transition: transform 0.5s ease;
+      transform: scale(1);
+      text-align: center;
+    }
+    .fire span {
+      display: block;
+      color: orange;
+      text-shadow: 0 0 10px red;
+    }
+    .right {
+      background: #333;
+      flex-direction: column;
+    }
+    .question {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .answers button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px;
+      font-size: 1em;
+      width: 80%;
+      max-width: 300px;
+      cursor: pointer;
+    }
+    .prize-message {
+      font-size: 2em;
+      color: green;
+      text-align: center;
+      margin-top: 20px;
+      display: none;
+    }
+    .explosion {
+      animation: explode 0.8s forwards;
+    }
+    @keyframes explode {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(3); opacity: 0; }
+    }
+    .congrats-box {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #000;
+      padding: 30px;
+      border: 2px solid #ff00ff;
+      color: #ff00ff;
+      font-size: 1.2em;
+      text-align: center;
+      z-index: 100;
+      display: none;
+      width: 80%;
+      max-width: 400px;
+    }
+    .congrats-box input {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ff00ff;
+      border-radius: 5px;
+      background: #222;
+      color: #fff;
+    }
+    .congrats-box button {
+      padding: 10px 20px;
+      font-size: 1em;
+      background: #ff00ff;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .congrats-box button:hover {
+      background: #ff66ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="instructions">
+    🔥 Answer 10 questions correctly to make the fire explode and win 0.5 SOL! 🔥
+  </div>
+  <div class="container" id="game-container">
+    <div class="left">
+      <div id="fire" class="fire">
+        <span>🔥</span>
+        <span>🔥</span>
+        <span>🔥</span>
+      </div>
+    </div>
+    <div class="right">
+      <div class="game">
+        <div class="question" id="question">Question will appear here</div>
+        <div class="answers" id="answers"></div>
+        <div class="prize-message" id="prize-message">🎉 You won 0.5 SOL! 🎉</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="congrats-box" id="congrats-box">
+    <p>🎉 Congratulations! You won 0.5 SOL! 🎉</p>
+    <p>Please enter your Solana wallet address to receive your prize. Our automated bot will send the SOL within 10 minutes.</p>
+    <input type="text" id="wallet-input" placeholder="Your Solana wallet address" />
+    <button onclick="submitWalletAddress()">Submit</button>
+  </div>
+
+  <script>
+    const questions = [
+      { q: "What is 2 + 2?", answers: ["3", "4", "5", "6"], correct: "4" },
+      { q: "Capital of France?", answers: ["Rome", "Paris", "London", "Berlin"], correct: "Paris" },
+      { q: "What color is the sky?", answers: ["Blue", "Green", "Red", "Yellow"], correct: "Blue" },
+      { q: "Which planet is closest to the sun?", answers: ["Venus", "Earth", "Mercury", "Mars"], correct: "Mercury" },
+      { q: "How many continents are there?", answers: ["5", "6", "7", "8"], correct: "7" },
+      { q: "What is the capital of Spain?", answers: ["Madrid", "Barcelona", "Seville", "Valencia"], correct: "Madrid" },
+      { q: "What is H2O?", answers: ["Oxygen", "Hydrogen", "Water", "Helium"], correct: "Water" },
+      { q: "Which animal barks?", answers: ["Cat", "Dog", "Cow", "Sheep"], correct: "Dog" },
+      { q: "How many legs does a spider have?", answers: ["6", "8", "10", "12"], correct: "8" },
+      { q: "What is the boiling point of water (°C)?", answers: ["90", "100", "110", "120"], correct: "100" },
+      { q: "What is the largest ocean?", answers: ["Atlantic", "Indian", "Pacific", "Arctic"], correct: "Pacific" },
+      { q: "Who wrote 'Hamlet'?", answers: ["Shakespeare", "Dickens", "Tolstoy", "Hemingway"], correct: "Shakespeare" },
+      { q: "What is the capital of Japan?", answers: ["Tokyo", "Seoul", "Beijing", "Bangkok"], correct: "Tokyo" },
+      { q: "Which gas do plants absorb?", answers: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"], correct: "Carbon Dioxide" },
+      { q: "What is 10 / 2?", answers: ["2", "5", "10", "20"], correct: "5" },
+      { q: "Which country is known as the Land of the Rising Sun?", answers: ["China", "Japan", "Korea", "Thailand"], correct: "Japan" },
+      { q: "What is the smallest prime number?", answers: ["0", "1", "2", "3"], correct: "2" },
+      { q: "Which planet is known as the Red Planet?", answers: ["Venus", "Mars", "Jupiter", "Saturn"], correct: "Mars" },
+      { q: "What language is spoken in Brazil?", answers: ["Spanish", "Portuguese", "French", "English"], correct: "Portuguese" },
+      { q: "How many planets are in our Solar System?", answers: ["7", "8", "9", "10"], correct: "8" }
+    ];
+
+    let currentQuestion = 0;
+    let correctCount = 0;
+    const fireElement = document.getElementById("fire");
+    const questionDiv = document.getElementById("question");
+    const answersDiv = document.getElementById("answers");
+    const prizeMessage = document.getElementById("prize-message");
+    const congratsBox = document.getElementById("congrats-box");
+    const walletInput = document.getElementById("wallet-input");
+    const gameContainer = document.getElementById("game-container");
+
+    function loadQuestion() {
+      if (currentQuestion < questions.length) {
+        const qObj = questions[currentQuestion];
+        questionDiv.textContent = qObj.q;
+        answersDiv.innerHTML = "";
+        qObj.answers.forEach(answer => {
+          const btn = document.createElement("button");
+          btn.textContent = answer;
+          btn.onclick = () => checkAnswer(answer, btn);
+          answersDiv.appendChild(btn);
+        });
+      } else {
+        currentQuestion = 0;
+        loadQuestion();
+      }
+    }
+
+    function checkAnswer(answer, btn) {
+      const qObj = questions[currentQuestion];
+      if (answer === qObj.correct) {
+        btn.style.backgroundColor = "green";
+        correctCount++;
+        setTimeout(() => {
+          growFire();
+          if (correctCount === 10) {
+            explodeFire();
+            setTimeout(() => {
+              awardPrize();
+            }, 800);
+            return;
+          }
+          currentQuestion++;
+          loadQuestion();
+        }, 1000);
+      } else {
+        currentQuestion++;
+        loadQuestion();
+      }
+    }
+
+    function growFire() {
+      let currentScale = fireElement.style.transform.replace(/[^\d\.]/g, "") || 1;
+      currentScale = parseFloat(currentScale);
+      let newScale = currentScale + 0.1;
+      fireElement.style.transform = `scale(${newScale})`;
+    }
+
+    function explodeFire() {
+      fireElement.classList.add("explosion");
+    }
+
+    function awardPrize() {
+      // Hide game elements and show congratulatory box
+      gameContainer.style.display = "none";
+      congratsBox.style.display = "block";
+    }
+
+    function submitWalletAddress() {
+      const walletAddress = walletInput.value.trim();
+      if(walletAddress) {
+        alert(`Wallet address ${walletAddress} submitted. Our bot will send 0.5 SOL within 10 minutes.`);
+        resetGame();
+      } else {
+        alert("Please enter a valid Solana wallet address.");
+      }
+    }
+
+    function resetGame() {
+      currentQuestion = 0;
+      correctCount = 0;
+      fireElement.classList.remove("explosion");
+      fireElement.style.transform = "scale(1)";
+      prizeMessage.style.display = "none";
+      congratsBox.style.display = "none";
+      gameContainer.style.display = "flex";
+      walletInput.value = "";
+      loadQuestion();
+    }
+
+    loadQuestion();
+  </script>
+</body>
+</html>
